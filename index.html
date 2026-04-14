@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sretan rođendan Cicka! 🎂</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fff5f7;
+            --card-bg: #ffffff;
+            --primary: #ff4d6d;
+            --secondary: #ff758f;
+            --text: #591c26;
+            --text-dim: #a7868b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            background: #ffe3e8;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .coupon-card {
+            background: var(--card-bg);
+            border: 2px solid #ffccd5;
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 10px 15px -3px rgba(255, 77, 109, 0.1);
+        }
+
+        .coupon-card:hover:not(.used) {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 25px rgba(255, 77, 109, 0.2);
+        }
+
+        .coupon-card.used {
+            opacity: 0.6;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .coupon-card.unlimited {
+            border: 2px dashed var(--secondary);
+            background: #fff0f3;
+        }
+
+        .coupon-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .description {
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            color: var(--text);
+        }
+
+        .btn-redeem {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(255, 77, 109, 0.3);
+        }
+
+        .btn-redeem:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        .btn-redeem:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 0.7rem;
+            background: #ffccd5;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px 0 20px 0;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            font-family: 'Great Vibes', cursive;
+        }
+
+        #notification {
+            position: fixed;
+            bottom: 30px;
+            background: #2d3436;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            display: none;
+            animation: slideUp 0.4s ease-out;
+            z-index: 1000;
+            font-weight: bold;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Sretan rođendan Cicka!</h1>
+        <div class="status-bar">Tvoji rođendanski vaučeri su spremni 💖</div>
+    </header>
+
+    <div class="grid" id="couponGrid"></div>
+
+    <div id="notification">Vaučer aktiviran! Javi Cicku. 😉</div>
+
+    <footer>
+        od Cicka za Cicku &hearts;
+    </footer>
+
+    <script>
+        const initialCoupons = [
+            { id: 1, title: "Pranje suđa", desc: "Cicko pere suđe cijeli dan.", type: 'single' },
+            { id: 2, title: "Masaža", desc: "Sat vremena Cicko masira.", type: 'single' },
+            { id: 3, title: "Doručak u krevet", desc: "Cicko pravi i donosi doručak u krevet.", type: 'single' },
+            { id: 4, title: "Izlet iz snova", desc: "Vodi te Cicko kamo god poželiš ovaj vikend.", type: 'single' },
+            { id: 5, title: "Obrok po izboru", desc: "Spremam ili naručujem što god Cickino srce želi.", type: 'single' },
+            { id: 6, title: "Bear Hug", desc: "Zagrljaji za Cickuuu!", type: 'unlimited' }
+        ];
+
+        let couponStatus = JSON.parse(localStorage.getItem('cicka_vouchers')) || {};
+
+        function renderCoupons() {
+            const grid = document.getElementById('couponGrid');
+            grid.innerHTML = '';
+
+            initialCoupons.forEach(c => {
+                const isUsed = c.type === 'single' && couponStatus[c.id];
+                const isUnlimited = c.type === 'unlimited';
+                
+                const card = document.createElement('div');
+                card.className = `coupon-card ${isUsed ? 'used' : ''} ${isUnlimited ? 'unlimited' : ''}`;
+                card.innerHTML = `
+                    <span class="badge">${isUnlimited ? '∞ Neograničeno' : (isUsed ? 'Iskorišteno' : 'Vrijedi')}</span>
+                    <div>
+                        <span class="coupon-title">${c.title}</span>
+                        <p class="description">${c.desc}</p>
+                    </div>
+                    <button class="btn-redeem" onclick="redeem(${c.id}, '${c.type}')" ${isUsed ? 'disabled' : ''}>
+                        ${isUsed ? 'ISKORIŠTENO' : 'ISKORISTI ODMAH'}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function redeem(id, type) {
+            if (type === 'single') {
+                couponStatus[id] = true;
+                localStorage.setItem('cicka_vouchers', JSON.stringify(couponStatus));
+            }
+            
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ff4d6d', '#ff758f', '#ffffff']
+            });
+
+            const note = document.getElementById('notification');
+            note.innerText = type === 'unlimited' ? "Zagrljaj stiže! (Ovaj vaučer vrijedi zauvijek)" : "Vaučer aktiviran! Javi Cicku. 😉";
+            note.style.display = 'block';
+            setTimeout(() => { note.style.display = 'none'; }, 4000);
+
+            renderCoupons();
+        }
+
+        renderCoupons();
+    </script>
+</body>
+</html>
